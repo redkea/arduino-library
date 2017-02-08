@@ -1,0 +1,30 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+RedkeaWiFi	KEYWORD1
+RedkeaWiFi101	KEYWORD1
+RedkeaESP8266	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+loop	KEYWORD2
+sendToTextWidget	KEYWORD2
+readFromSliderWidget	KEYWORD2
+readFromToggleWidget	KEYWORD2
+readFromTouchWidget	KEYWORD2
+REDKEA_SEND	KEYWORD2
+REDKEA_RECEIVE	KEYWORD2
+
+######################################
+# Constants (LITERAL1)
+#######################################
+args	LITERAL1
+widgetID	LITERAL1
