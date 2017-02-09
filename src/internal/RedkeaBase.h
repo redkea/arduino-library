@@ -39,6 +39,9 @@ public:
     bool readFromToggleWidget(RedkeaMessage::Args args);
     bool readFromTouchWidget(RedkeaMessage::Args args);
 
+    void registerSender(const String& name, RedkeaSendFunctionPtr fun);
+    void registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun);
+
 private:
     RedkeaMessage createMessage(const char widgetID[UID_LENGTH]);
     void sendMessage(const RedkeaMessage& message);
@@ -97,6 +100,14 @@ template <typename Types> bool RedkeaBase<Types>::readFromToggleWidget(RedkeaMes
 
 template <typename Types> bool RedkeaBase<Types>::readFromTouchWidget(RedkeaMessage::Args args) {
     return args.asBool();
+}
+
+template <typename Types> void RedkeaBase<Types>::registerSender(const String& name, RedkeaSendFunctionPtr fun) {
+    m_looper.registerSender(name, fun);
+}
+
+template <typename Types> void RedkeaBase<Types>::registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun) {
+    m_looper.registerReceiver(name, fun);
 }
 
 #endif

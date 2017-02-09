@@ -75,6 +75,7 @@ public:
         }
         else {
             m_tail->next = node;
+            m_tail = node;
         }
         node->next = NULL;
     }

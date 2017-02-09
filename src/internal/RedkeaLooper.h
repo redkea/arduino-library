@@ -35,6 +35,8 @@ public:
     bool connected();
     void loop();
     void write(const uint8_t* data, uint16_t payloadSize);
+    void registerSender(const String& name, RedkeaSendFunctionPtr fun);
+    void registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun);
 
 private:
     enum class ConnectionState : uint8_t { NOT_CONNECTED, CONNECTION_LOST, CONNECTED };
@@ -56,12 +58,34 @@ private:
     void sendBroadcast();
     void sendPong();
 
+    struct Sender {
+        Sender(const String& name, RedkeaSendFunctionPtr fun)
+            : name(name)
+            , fun(fun)
+            , next(NULL) {}
+        String name;
+        RedkeaSendFunctionPtr fun;
+        Sender* next;
+    };
+
+    struct Receiver {
+        Receiver(const String& name, RedkeaReceiveFunctionPtr fun)
+            : name(name)
+            , fun(fun)
+            , next(NULL) {}
+        String name;
+        RedkeaReceiveFunctionPtr fun;
+        Receiver* next;
+    };
+
     typename Types::ServerType m_server;
     typename Types::ClientType m_client;
     ConnectionState m_connectionState;
     typename Types::UDPType m_udp;
     String m_deviceID;
     RedkeaList<Timer> m_timers;
+    RedkeaList<Sender> m_senders;
+    RedkeaList<Receiver> m_receivers;
 };
 
 template <typename Types>
@@ -217,13 +241,27 @@ template <typename Types> void RedkeaLooper<Types>::writeToAnalogPin(const Redke
 template <typename Types> void RedkeaLooper<Types>::functionWrite(const RedkeaMessage& message) {
     RedkeaMessage::Args it = message.paramsBegin();
     String funIDStr = it.asString();
-    uint8_t funID = atoi(funIDStr.c_str());
-    RedkeaReceiveFunctionPtr fun = redkeaReceiveFunctionArray[funID];
-    fun(++it);
+    Receiver* receiver = m_receivers.head();
+    while (receiver != NULL) {
+        if (receiver->name == funIDStr) {
+            RedkeaReceiveFunctionPtr fun = receiver->fun;
+            fun(++it);
+            return;
+        }
+        receiver = receiver->next;
+    }
+    REDKEA_PRINT_F("Receiver function ");
+    REDKEA_PRINT(funIDStr);
+    REDKEA_PRINTLN_F(" is not registered");
 }
 
 template <typename Types> void RedkeaLooper<Types>::readDigitalPin(Timer* timer) {
-    bool value = ::digitalRead(timer->source);
+#ifdef analogInputToDigitalPin
+    uint8_t source = analogInputToDigitalPin(atoi(timer->source.c_str()));
+#else
+    uint8_t source = atoi(source.c_str());
+#endif
+    bool value = ::digitalRead(source);
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
     message.addString(timer->widgetID, UID_LENGTH);
     message.addBool(value);
@@ -231,7 +269,7 @@ template <typename Types> void RedkeaLooper<Types>::readDigitalPin(Timer* timer)
 }
 
 template <typename Types> void RedkeaLooper<Types>::readAnalogPin(Timer* timer) {
-    int16_t value = ::analogRead(timer->source);
+    int16_t value = ::analogRead(atoi(timer->source.c_str()));
 #ifdef REDKEA_DEBUG_VERBOSE
     REDKEA_PRINT_F("Analog read pin ");
     REDKEA_PRINT(timer->source);
@@ -245,7 +283,18 @@ template <typename Types> void RedkeaLooper<Types>::readAnalogPin(Timer* timer) 
 }
 
 template <typename Types> void RedkeaLooper<Types>::functionRead(Timer* timer) {
-    redkeaSendFunctionArray[timer->source](timer->widgetID);
+    Sender* sender = m_senders.head();
+    while (sender != NULL) {
+        if (sender->name == timer->source) {
+            RedkeaSendFunctionPtr fun = sender->fun;
+            fun(timer->widgetID);
+            return;
+        }
+        sender = sender->next;
+    }
+    REDKEA_PRINT_F("Sender function ");
+    REDKEA_PRINT(timer->source);
+    REDKEA_PRINTLN_F(" is not registered");
 }
 
 template <typename Types> void RedkeaLooper<Types>::setupTimers(const RedkeaMessage& message) {
@@ -255,17 +304,7 @@ template <typename Types> void RedkeaLooper<Types>::setupTimers(const RedkeaMess
     for (uint16_t i = 0; i < numTimers; ++i) {
         Timer* timer = new Timer();
         timer->command = (RedkeaCommand)(++it).asByte();
-        String sourceStr = (++it).asString();
-        if (timer->command == RedkeaCommand::READ_FROM_ANALOG_PIN) {
-#ifdef analogInputToDigitalPin
-            uint8_t source = atoi(sourceStr.c_str());
-            timer->source = analogInputToDigitalPin(source);
-#else
-            timer->source = atoi(sourceStr.c_str());
-#endif
-        } else {
-            timer->source = atoi(sourceStr.c_str());
-        }
+        timer->source = (++it).asString();
         String widgetIDStr = (++it).asString();
         strncpy(timer->widgetID, widgetIDStr.c_str(), widgetIDStr.length());
         timer->interval = (++it).asInt();
@@ -336,6 +375,16 @@ template <typename Types> void RedkeaLooper<Types>::sendBroadcast() {
             m_udp.endPacket();
         }
     }
+}
+
+template <typename Types> void RedkeaLooper<Types>::registerSender(const String& name, RedkeaSendFunctionPtr fun) {
+    Sender* sender = new Sender(name, fun);
+    m_senders.add(sender);
+}
+
+template <typename Types> void RedkeaLooper<Types>::registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun) {
+    Receiver* receiver = new Receiver(name, fun);
+    m_receivers.add(receiver);
 }
 
 #endif
