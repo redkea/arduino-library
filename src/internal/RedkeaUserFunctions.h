@@ -31,10 +31,10 @@ typedef void(*RedkeaReceiveFunctionPtr)(RedkeaMessage::Args args);
 #define REDKEA_RECEIVER(name) \
     void name (RedkeaMessage::Args args)
 
-typedef void(*RedkeaSendFunctionPtr)(const char widgetID[UID_LENGTH]);
+typedef void(*RedkeaSendFunctionPtr)(uint16_t widgetID);
 
 #define REDKEA_SENDER(name) \
-    void name (const char widgetID[UID_LENGTH])
+    void name (uint16_t widgetID)
 
 #define REDKEA_REGISTER_SENDER(obj, name) \
     obj.registerSender(#name, &name);

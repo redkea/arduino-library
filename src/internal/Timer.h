@@ -25,7 +25,7 @@
 struct Timer {
     RedkeaCommand command;
     String source;
-    char widgetID[UID_LENGTH];
+    uint16_t widgetID;
     uint16_t interval;
     long long lastCall;
     

@@ -28,8 +28,6 @@
 const uint16_t REDKEA_PORT = 5050;
 const uint16_t REDKEA_DISCOVERY_PORT = 20555;
 
-#define UID_LENGTH 20
-
 //#define REDKEA_DEBUG
 //#define REDKEA_DEBUG_VERBOSE
 

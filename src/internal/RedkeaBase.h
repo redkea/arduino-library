@@ -31,9 +31,9 @@ public:
     void begin(const String& deviceID);
     void loop();
 
-    void sendToTextWidget(const char widgetID[UID_LENGTH], const String& text);
-    void sendToTextWidget(const char widgetID[UID_LENGTH], int value);
-    void sendToTextWidget(const char widgetID[UID_LENGTH], float value);
+    void sendToTextWidget(uint16_t widgetID, const String& text);
+    void sendToTextWidget(uint16_t widgetID, int value);
+    void sendToTextWidget(uint16_t widgetID, float value);
 
     int readFromSliderWidget(RedkeaMessage::Args args);
     bool readFromToggleWidget(RedkeaMessage::Args args);
@@ -43,7 +43,7 @@ public:
     void registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun);
 
 private:
-    RedkeaMessage createMessage(const char widgetID[UID_LENGTH]);
+    RedkeaMessage createMessage(uint16_t widgetID);
     void sendMessage(const RedkeaMessage& message);
 
 private:
@@ -62,9 +62,9 @@ template <typename Types> void RedkeaBase<Types>::loop() {
     m_looper.loop();
 }
 
-template <typename Types> RedkeaMessage RedkeaBase<Types>::createMessage(const char widgetID[UID_LENGTH]) {
+template <typename Types> RedkeaMessage RedkeaBase<Types>::createMessage(uint16_t widgetID) {
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
-    message.addString(widgetID, UID_LENGTH);
+    message.addInt(widgetID);
     return message;
 }
 
@@ -72,19 +72,19 @@ template <typename Types> void RedkeaBase<Types>::sendMessage(const RedkeaMessag
     m_looper.write(message.data(), message.size());
 }
 
-template <typename Types> void RedkeaBase<Types>::sendToTextWidget(const char widgetID[UID_LENGTH], const String& text) {
+template <typename Types> void RedkeaBase<Types>::sendToTextWidget(uint16_t widgetID, const String& text) {
     RedkeaMessage message = createMessage(widgetID);
     message.addString(text);
     sendMessage(message);
 }
 
-template <typename Types> void RedkeaBase<Types>::sendToTextWidget(const char widgetID[UID_LENGTH], int value) {
+template <typename Types> void RedkeaBase<Types>::sendToTextWidget(uint16_t widgetID, int value) {
     RedkeaMessage message = createMessage(widgetID);
     message.addInt(value);
     sendMessage(message);
 }
 
-template <typename Types> void RedkeaBase<Types>::sendToTextWidget(const char widgetID[UID_LENGTH], float value) {
+template <typename Types> void RedkeaBase<Types>::sendToTextWidget(uint16_t widgetID, float value) {
     RedkeaMessage message = createMessage(widgetID);
     message.addFloat(value);
     sendMessage(message);

@@ -263,7 +263,7 @@ template <typename Types> void RedkeaLooper<Types>::readDigitalPin(Timer* timer)
 #endif
     bool value = ::digitalRead(source);
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
-    message.addString(timer->widgetID, UID_LENGTH);
+    message.addInt(timer->widgetID);
     message.addBool(value);
     write(message.data(), message.size());
 }
@@ -277,7 +277,7 @@ template <typename Types> void RedkeaLooper<Types>::readAnalogPin(Timer* timer) 
     REDKEA_PRINTLN(value);
 #endif
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
-    message.addString(timer->widgetID, UID_LENGTH);
+    message.addInt(timer->widgetID);
     message.addInt(value);
     write(message.data(), message.size());
 }
@@ -305,8 +305,7 @@ template <typename Types> void RedkeaLooper<Types>::setupTimers(const RedkeaMess
         Timer* timer = new Timer();
         timer->command = (RedkeaCommand)(++it).asByte();
         timer->source = (++it).asString();
-        String widgetIDStr = (++it).asString();
-        strncpy(timer->widgetID, widgetIDStr.c_str(), widgetIDStr.length());
+        timer->widgetID = (++it).asInt();
         timer->interval = (++it).asInt();
         timer->lastCall = millis();
 #ifdef REDKEA_DEBUG_VERBOSE
@@ -316,7 +315,7 @@ template <typename Types> void RedkeaLooper<Types>::setupTimers(const RedkeaMess
         REDKEA_PRINT_F("\tSource: ");
         REDKEA_PRINTLN(timer->source);
         REDKEA_PRINT_F("\tWidgetID: ");
-        REDKEA_PRINTLN(widgetIDStr);
+        REDKEA_PRINTLN(timer->widgetID);
         REDKEA_PRINT_F("\tInterval: ");
         REDKEA_PRINTLN(timer->interval);
 #endif
