@@ -17,10 +17,16 @@ int frequency = 5;
 int ledState = LOW;
 long long lastChange = millis();
 
+REDKEA_RECEIVER(readFrequency) {
+    frequency = redkea.readFromSliderWidget(args);
+}
+
 void setup() {
     Serial.begin(9600);
     pinMode(ledPin, OUTPUT);
     redkea.begin(ssid, pass, deviceID);
+	
+    REDKEA_REGISTER_RECEIVER(redkea, readFrequency);
 }
 
 void loop() {
@@ -30,9 +36,4 @@ void loop() {
         digitalWrite(ledPin, ledState);
         lastChange = millis();
     }
-}
-
-REDKEA_RECEIVE(0) {
-    frequency = redkea.readFromSliderWidget(args);
-    Serial.println(String("Frequency: ") + frequency);
 }
