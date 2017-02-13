@@ -1,5 +1,5 @@
 /*
-   Create a text widget and connect it to user function 0.
+   Create a text widget and connect it to user function 'sendUptime'.
    The widget will show the time the Arduino has been running since the last reset.
 */
 
@@ -20,11 +20,11 @@ REDKEA_SENDER(sendUptime) {
     redkea.sendToTextWidget(widgetID, str);
 }
 
+REDKEA_REGISTER_SENDER(redkea, sendUptime);
+
 void setup() {
     Serial.begin(9600);
     redkea.begin(ssid, pass, deviceID);
-
-    REDKEA_REGISTER_SENDER(redkea, sendUptime);
 }
 
 void loop() {

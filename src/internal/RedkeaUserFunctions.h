@@ -25,18 +25,34 @@
 
 typedef void(*RedkeaReceiveFunctionPtr)(RedkeaMessage::Args args);
 
-#define REDKEA_REGISTER_RECEIVER(obj, name) \
-    obj.registerReceiver(#name, &name);
+template <typename BaseType>
+struct RedkeaRegisterReceiver {
+    RedkeaRegisterReceiver<BaseType>(BaseType* base, const String& name, RedkeaReceiveFunctionPtr ptr) {
+        base->registerReceiver(name, ptr);
+    }
+};
 
 #define REDKEA_RECEIVER(name) \
     void name (RedkeaMessage::Args args)
 
+#define REDKEA_REGISTER_RECEIVER(obj, name) \
+    RedkeaRegisterReceiver<decltype(obj)> registerReceiver_ ## name(&obj, #name, &name);
+
+
+
 typedef void(*RedkeaSendFunctionPtr)(uint16_t widgetID);
+
+template <typename BaseType>
+struct RedkeaRegisterSender {
+    RedkeaRegisterSender<BaseType>(BaseType* base, const String& name, RedkeaSendFunctionPtr ptr) {
+        base->registerSender(name, ptr);
+    }
+};
 
 #define REDKEA_SENDER(name) \
     void name (uint16_t widgetID)
 
 #define REDKEA_REGISTER_SENDER(obj, name) \
-    obj.registerSender(#name, &name);
+    RedkeaRegisterSender<decltype(obj)> registerSender_ ## name(&obj, #name, &name);
 
 #endif

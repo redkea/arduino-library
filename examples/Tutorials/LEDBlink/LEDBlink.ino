@@ -1,5 +1,5 @@
 /*
-   Create a slider widget and connect it to digital pin 9.
+   Create a slider widget and connect it to user function 'readFrequency'.
    Connect a LED to pin 9.
    The slider controls the blinking frequency of the LED.
 */
@@ -21,12 +21,12 @@ REDKEA_RECEIVER(readFrequency) {
     frequency = redkea.readFromSliderWidget(args);
 }
 
+REDKEA_REGISTER_RECEIVER(redkea, readFrequency);
+
 void setup() {
     Serial.begin(9600);
     pinMode(ledPin, OUTPUT);
     redkea.begin(ssid, pass, deviceID);
-	
-    REDKEA_REGISTER_RECEIVER(redkea, readFrequency);
 }
 
 void loop() {
