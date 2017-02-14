@@ -32,7 +32,7 @@ struct RedkeaRegisterReceiver {
     }
 };
 
-#define REDKEA_RECEIVER(name) \
+#define REDKEA_RECEIVER(name, args) \
     void name (RedkeaMessage::Args args)
 
 #define REDKEA_REGISTER_RECEIVER(obj, name) \
@@ -49,7 +49,7 @@ struct RedkeaRegisterSender {
     }
 };
 
-#define REDKEA_SENDER(name) \
+#define REDKEA_SENDER(name, widgetID) \
     void name (uint16_t widgetID)
 
 #define REDKEA_REGISTER_SENDER(obj, name) \

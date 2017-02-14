@@ -17,7 +17,7 @@ int frequency = 5;
 int ledState = LOW;
 long long lastChange = millis();
 
-REDKEA_RECEIVER(readFrequency) {
+REDKEA_RECEIVER(readFrequency, args) {
     frequency = redkea.readFromSliderWidget(args);
 }
 

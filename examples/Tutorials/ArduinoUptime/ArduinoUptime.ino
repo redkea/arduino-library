@@ -12,7 +12,7 @@ char deviceID[] = "xxx"; // your device ID
 
 RedkeaWiFi redkea;
 
-REDKEA_SENDER(sendUptime) {
+REDKEA_SENDER(sendUptime, widgetID) {
     long secondsSinceStart = millis() / 1000;
     String str = "Arduino running since ";
     str += secondsSinceStart;
