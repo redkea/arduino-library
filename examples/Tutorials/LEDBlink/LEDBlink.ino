@@ -1,18 +1,18 @@
 /*
    Create a slider widget and connect it to user function 'readFrequency'.
-   Connect a LED to pin 9.
+   Connect a LED to pin 5.
    The slider controls the blinking frequency of the LED.
 */
 
-#include "RedkeaWiFi.h"
+#include "RedkeaESP8266.h"
 
 char ssid[] = "xxx";     // your WiFi SSID
 char pass[] = "xxx";     // your WiFi password
 char deviceID[] = "xxx"; // your device ID
 
-RedkeaWiFi redkea;
+RedkeaESP8266 redkea;
 
-int ledPin = 9;
+int ledPin = 5;
 int frequency = 5;
 int ledState = LOW;
 long long lastChange = millis();
