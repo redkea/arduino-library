@@ -42,7 +42,7 @@ public:
     uint8_t* data();
 
     template <typename T> void append(const T& value);
-	void append(const uint8_t* buf, int16_t size);
+    void append(const uint8_t* buf, int16_t size);
 
 private:
     uint16_t m_capacity;
@@ -61,17 +61,18 @@ template <typename T> void RedkeaBuffer::append(const T& value) {
 
 enum class RedkeaCommand : uint8_t {
     // app to device commands
-    WRITE_TO_DIGITAL_PIN = 0,
-    WRITE_TO_ANALOG_PIN = 1,
-    WRITE_TO_FUNCTION = 2,
-    WELCOME = 3,
-    SETUP_TIMERS = 4,
-    PING = 5,
+    DIGITAL_WRITE = 0,
+    PWM_WRITE = 1,
+    DAC_WRITE = 2,
+    FUNCTION_WRITE = 3,
+    WELCOME = 4,
+    SETUP_TIMERS = 5,
+    PING = 6,
 
     // in-device commands
-    READ_FROM_DIGITAL_PIN = 100,
-    READ_FROM_ANALOG_PIN = 101,
-    READ_FROM_FUNCTION = 102,
+    DIGITAL_READ = 100,
+    ADC_READ = 101,
+    FUNCTION_READ = 102,
 
     // device to app commands
     DATA_SEND = 200,
@@ -96,14 +97,14 @@ public:
         bool isByte() const;
         bool isInt() const;
         bool isBool() const;
-		bool isFloat() const;
-		bool isString() const;
+        bool isFloat() const;
+        bool isString() const;
 
         uint8_t asByte() const;
         int16_t asInt() const;
         bool asBool() const;
-		float asFloat() const;
-		String asString() const;
+        float asFloat() const;
+        String asString() const;
 
         Args& operator++();
 
@@ -123,13 +124,13 @@ public:
 
     Args paramsBegin() const;
     Args paramsEnd() const;
-    
+
     void addByte(uint8_t value);
     void addInt(int16_t value);
     void addBool(bool value);
-	void addFloat(float value);
+    void addFloat(float value);
     void addString(const char* value, uint16_t size);
-	void addString(const String& value);
+    void addString(const String& value);
 
 private:
     RedkeaBuffer m_buffer;

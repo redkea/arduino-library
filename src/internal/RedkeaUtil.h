@@ -1,5 +1,4 @@
-﻿
-/*
+﻿/*
         redkea library for Arduino
         Copyright 2017 redkea
 

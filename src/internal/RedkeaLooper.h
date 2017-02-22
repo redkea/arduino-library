@@ -44,12 +44,12 @@ private:
 
     void handleMessage(const RedkeaMessage& message);
 
-    void writeToDigitalPin(const RedkeaMessage& message);
-    void writeToAnalogPin(const RedkeaMessage& message);
+    void digitalWrite(const RedkeaMessage& message);
+    void analogWrite(const RedkeaMessage& message);
     void functionWrite(const RedkeaMessage& message);
 
-    void readDigitalPin(Timer* timer);
-    void readAnalogPin(Timer* timer);
+    void digitalRead(Timer* timer);
+    void analogRead(Timer* timer);
     void functionRead(Timer* timer);
 
     void setupTimers(const RedkeaMessage& message);
@@ -163,15 +163,20 @@ template <typename Types> void RedkeaLooper<Types>::loop() {
 
 template <typename Types> void RedkeaLooper<Types>::handleMessage(const RedkeaMessage& message) {
     switch (message.command()) {
-    case RedkeaCommand::WRITE_TO_DIGITAL_PIN: {
-        writeToDigitalPin(message);
+    case RedkeaCommand::DIGITAL_WRITE: {
+        digitalWrite(message);
         break;
     }
-    case RedkeaCommand::WRITE_TO_ANALOG_PIN: {
-        writeToAnalogPin(message);
+    case RedkeaCommand::PWM_WRITE: {
+        analogWrite(message);
         break;
     }
-    case RedkeaCommand::WRITE_TO_FUNCTION: {
+#if defined(ARDUINO_SAMD_MKR1000)
+    case RedkeaCommand::DAC_WRITE: {
+        analogWrite(message); break;
+    }
+#endif
+    case RedkeaCommand::FUNCTION_WRITE: {
         functionWrite(message);
         break;
     }
@@ -191,51 +196,39 @@ template <typename Types> void RedkeaLooper<Types>::handleMessage(const RedkeaMe
     }
 }
 
-template <typename Types> void RedkeaLooper<Types>::writeToDigitalPin(const RedkeaMessage& message) {
+template <typename Types> void RedkeaLooper<Types>::digitalWrite(const RedkeaMessage& message) {
     RedkeaMessage::Args it = message.paramsBegin();
     String pinStr = it.asString();
     uint8_t pin = atoi(pinStr.c_str());
     pinMode(pin, OUTPUT);
 
     RedkeaMessage::Args args = ++it;
-    if (args.isBool()) {
-#ifdef REDKEA_DEBUG_VERBOSE
-        REDKEA_PRINT_F("Digital write to pin ");
-        REDKEA_PRINT(pin);
-        REDKEA_PRINT_F(": ");
-        REDKEA_PRINTLN(args.asBool());
-#endif
-        ::digitalWrite(pin, args.asBool() ? HIGH : LOW);
-    } else if (args.isInt()) {
-#ifdef REDKEA_DEBUG_VERBOSE
-        REDKEA_PRINT_F("Analog write to pin ");
-        REDKEA_PRINT(pin);
-        REDKEA_PRINT_F(": ");
-        REDKEA_PRINTLN(args.asInt());
-#endif
-        REDKEA_ASSERT(digitalPinHasPWM(pin));
-        ::analogWrite(pin, args.asInt());
-    }
-}
-
-template <typename Types> void RedkeaLooper<Types>::writeToAnalogPin(const RedkeaMessage& message) {
-    RedkeaMessage::Args it = message.paramsBegin();
-    String pinStr = it.asString();
-#if defined analogInputToDigitalPin
-    uint8_t pin = analogInputToDigitalPin(atoi(pinStr.c_str()));
-#else
-    uint8_t pin = atoi(pinStr.c_str());
-#endif
-    pinMode(pin, OUTPUT);
-
-    bool value = (++it).asBool();
+    REDKEA_ASSERT(args.isBool());
 #ifdef REDKEA_DEBUG_VERBOSE
     REDKEA_PRINT_F("Digital write to pin ");
     REDKEA_PRINT(pin);
     REDKEA_PRINT_F(": ");
-    REDKEA_PRINTLN(value);
+    REDKEA_PRINTLN(args.asBool());
 #endif
-    ::digitalWrite(pin, value ? HIGH : LOW);
+    ::digitalWrite(pin, args.asBool() ? HIGH : LOW);
+}
+
+template <typename Types> void RedkeaLooper<Types>::analogWrite(const RedkeaMessage& message) {
+    RedkeaMessage::Args it = message.paramsBegin();
+    String pinStr = it.asString();
+    uint8_t pin = atoi(pinStr.c_str());
+    pinMode(pin, OUTPUT);
+
+    RedkeaMessage::Args args = ++it;
+    REDKEA_ASSERT(args.isInt());
+    REDKEA_ASSERT(digitalPinHasPWM(pin));
+#ifdef REDKEA_DEBUG_VERBOSE
+    REDKEA_PRINT_F("Analog write to pin ");
+    REDKEA_PRINT(pin);
+    REDKEA_PRINT_F(": ");
+    REDKEA_PRINTLN(args.asBool());
+#endif
+    ::analogWrite(pin, args.asInt());
 }
 
 template <typename Types> void RedkeaLooper<Types>::functionWrite(const RedkeaMessage& message) {
@@ -255,23 +248,26 @@ template <typename Types> void RedkeaLooper<Types>::functionWrite(const RedkeaMe
     REDKEA_PRINTLN_F(" is not registered");
 }
 
-template <typename Types> void RedkeaLooper<Types>::readDigitalPin(Timer* timer) {
-#ifdef analogInputToDigitalPin
-    uint8_t source = analogInputToDigitalPin(atoi(timer->source.c_str()));
-#else
-    uint8_t source = atoi(source.c_str());
-#endif
+template <typename Types> void RedkeaLooper<Types>::digitalRead(Timer* timer) {
+    uint8_t source = atoi(timer->source.c_str());
     bool value = ::digitalRead(source);
+#ifdef REDKEA_DEBUG_VERBOSE
+    REDKEA_PRINT_F("Digital read from pin ");
+    REDKEA_PRINT(timer->source);
+    REDKEA_PRINT_F(": ");
+    REDKEA_PRINTLN(value);
+#endif
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
     message.addInt(timer->widgetID);
     message.addBool(value);
     write(message.data(), message.size());
 }
 
-template <typename Types> void RedkeaLooper<Types>::readAnalogPin(Timer* timer) {
-    int16_t value = ::analogRead(atoi(timer->source.c_str()));
+template <typename Types> void RedkeaLooper<Types>::analogRead(Timer* timer) {
+    uint8_t source = atoi(timer->source.c_str());
+    int16_t value = ::analogRead(source);
 #ifdef REDKEA_DEBUG_VERBOSE
-    REDKEA_PRINT_F("Analog read pin ");
+    REDKEA_PRINT_F("Analog read from pin ");
     REDKEA_PRINT(timer->source);
     REDKEA_PRINT_F(": ");
     REDKEA_PRINTLN(value);
@@ -339,23 +335,22 @@ template <typename Types> void RedkeaLooper<Types>::handleTimers() {
         long long timeSinceCall = millis() - timer->lastCall;
         if (timeSinceCall >= timer->interval) {
             switch (timer->command) {
-            case RedkeaCommand::READ_FROM_DIGITAL_PIN: {
-                readDigitalPin(timer);
+            case RedkeaCommand::DIGITAL_READ: {
+                digitalRead(timer);
                 break;
             }
-            case RedkeaCommand::READ_FROM_ANALOG_PIN: {
-                readAnalogPin(timer);
+            case RedkeaCommand::ADC_READ: {
+                analogRead(timer);
                 break;
             }
-            case RedkeaCommand::READ_FROM_FUNCTION: {
+            case RedkeaCommand::FUNCTION_READ: {
                 functionRead(timer);
                 break;
             }
+                timer->lastCall = millis();
             }
-            timer->lastCall = millis();
+            timer = timer->next;
         }
-
-        timer = timer->next;
     }
 }
 
