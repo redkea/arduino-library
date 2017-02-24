@@ -173,7 +173,8 @@ template <typename Types> void RedkeaLooper<Types>::handleMessage(const RedkeaMe
     }
 #if defined(ARDUINO_SAMD_MKR1000)
     case RedkeaCommand::DAC_WRITE: {
-        analogWrite(message); break;
+        analogWrite(message);
+        break;
     }
 #endif
     case RedkeaCommand::FUNCTION_WRITE: {
@@ -226,7 +227,7 @@ template <typename Types> void RedkeaLooper<Types>::analogWrite(const RedkeaMess
     REDKEA_PRINT_F("Analog write to pin ");
     REDKEA_PRINT(pin);
     REDKEA_PRINT_F(": ");
-    REDKEA_PRINTLN(args.asBool());
+    REDKEA_PRINTLN(args.asInt());
 #endif
     ::analogWrite(pin, args.asInt());
 }
@@ -347,10 +348,10 @@ template <typename Types> void RedkeaLooper<Types>::handleTimers() {
                 functionRead(timer);
                 break;
             }
-                timer->lastCall = millis();
             }
-            timer = timer->next;
+            timer->lastCall = millis();
         }
+        timer = timer->next;
     }
 }
 
