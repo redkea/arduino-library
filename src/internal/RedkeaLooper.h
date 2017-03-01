@@ -259,7 +259,7 @@ template <typename Types> void RedkeaLooper<Types>::digitalRead(Timer* timer) {
     REDKEA_PRINTLN(value);
 #endif
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
-    message.addInt(timer->widgetID);
+    message.addString(timer->widgetID);
     message.addBool(value);
     write(message.data(), message.size());
 }
@@ -274,7 +274,7 @@ template <typename Types> void RedkeaLooper<Types>::analogRead(Timer* timer) {
     REDKEA_PRINTLN(value);
 #endif
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
-    message.addInt(timer->widgetID);
+    message.addString(timer->widgetID);
     message.addInt(value);
     write(message.data(), message.size());
 }
@@ -302,7 +302,7 @@ template <typename Types> void RedkeaLooper<Types>::setupTimers(const RedkeaMess
         Timer* timer = new Timer();
         timer->command = (RedkeaCommand)(++it).asByte();
         timer->source = (++it).asString();
-        timer->widgetID = (++it).asInt();
+        timer->widgetID = (++it).asString();
         timer->interval = (++it).asInt();
         timer->lastCall = millis();
 #ifdef REDKEA_DEBUG_VERBOSE

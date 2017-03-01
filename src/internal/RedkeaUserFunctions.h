@@ -40,7 +40,7 @@ struct RedkeaRegisterReceiver {
 
 
 
-typedef void(*RedkeaSendFunctionPtr)(uint16_t widgetID);
+typedef void(*RedkeaSendFunctionPtr)(const String& widgetID);
 
 template <typename BaseType>
 struct RedkeaRegisterSender {
@@ -50,7 +50,7 @@ struct RedkeaRegisterSender {
 };
 
 #define REDKEA_SENDER(name, widgetID) \
-    void name (uint16_t widgetID)
+    void name (const String& widgetID)
 
 #define REDKEA_REGISTER_SENDER(obj, name) \
     RedkeaRegisterSender<decltype(obj)> registerSender_ ## name(&obj, #name, &name);
