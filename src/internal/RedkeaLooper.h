@@ -134,7 +134,7 @@ template <typename Types> void RedkeaLooper<Types>::loop() {
     }
 
     // read data from client
-    if (m_client.available()) {
+    while (m_client.available()) {
         RedkeaBuffer buffer;
 
         // read message header
