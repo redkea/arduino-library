@@ -55,4 +55,24 @@ struct RedkeaRegisterSender {
 #define REDKEA_REGISTER_SENDER(obj, name) \
     RedkeaRegisterSender<decltype(obj)> registerSender_ ## name(&obj, #name, &name);
 
+struct Sender {
+    Sender(const String& name, RedkeaSendFunctionPtr fun)
+        : name(name)
+        , fun(fun)
+        , next(NULL) {}
+    String name;
+    RedkeaSendFunctionPtr fun;
+    Sender* next;
+};
+
+struct Receiver {
+    Receiver(const String& name, RedkeaReceiveFunctionPtr fun)
+        : name(name)
+        , fun(fun)
+        , next(NULL) {}
+    String name;
+    RedkeaReceiveFunctionPtr fun;
+    Receiver* next;
+};
+
 #endif

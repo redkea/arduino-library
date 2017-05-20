@@ -33,7 +33,7 @@
 #else
 
 #define REDKEA_F(arg) arg
-#define PROGMEM 
+#define PROGMEM
 #define PGM_P const char*
 
 #endif
@@ -51,32 +51,47 @@
 #else
 #define REDKEA_PRINTLN(message)
 #define REDKEA_PRINT(message)
-#define REDKEA_PRINTLN_F(message) 
-#define REDKEA_PRINT_F(message) 
+#define REDKEA_PRINTLN_F(message)
+#define REDKEA_PRINT_F(message)
 #define REDKEA_ASSERT(cond)
 #endif
 
 
-template<typename Node>
-class RedkeaList {
+template <typename Node> class RedkeaList {
 public:
-    RedkeaList() : m_head(NULL), m_tail(NULL) {}
-    ~RedkeaList() {
-        clear();
-    }
+    RedkeaList()
+        : m_head(NULL) {}
+    ~RedkeaList() { clear(); }
 
     Node* head() { return m_head; }
 
     void add(Node* node) {
         if (m_head == NULL) {
             m_head = node;
-            m_tail = node;
-        }
-        else {
-            m_tail->next = node;
-            m_tail = node;
+        } else {
+            Node* it = m_head;
+            while (it->next != NULL) {
+                it = it->next;
+            }
+            it->next = node;
         }
         node->next = NULL;
+    }
+
+    Node* remove(Node* node) {
+        if (m_head == node) {
+            m_head = node->next;
+            delete node;
+            return m_head;
+        } else {
+            Node* it = m_head;
+            while (it->next != node) {
+                it = it->next;
+            }
+            it->next = node->next;
+            delete node;
+            return it->next;
+        }
     }
 
     void clear() {
@@ -87,12 +102,10 @@ public:
             current = next;
         }
         m_head = NULL;
-        m_tail = NULL;
     }
 
 private:
     Node* m_head;
-    Node* m_tail;
 };
 
 #endif
