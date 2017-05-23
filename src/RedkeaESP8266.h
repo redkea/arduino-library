@@ -35,22 +35,26 @@ struct Types {
 };
 
 const char rootHtml[] PROGMEM =
-R"(<html><body>
-				<h1>Redkea WiFi Setup</h1>
-				<form action="http://192.168.4.1/setup" method="post">
-				  <div>
-					<label for="ssid">WiFi SSID</label>
-					<input name="ssid" value="Redkea123">
-				  </div>
-				  <div>
-					<label for="pass">WiFi Password</label>
-					<input name="pass" value="Redkea123">
-				  </div>
-				  <div>
-					<button>Save Configuration</button>
-				  </div>
-				</form>
-			</body></html>
+    R"(<html><body>
+		<h1>Redkea WiFi Setup</h1>
+			<form action="http://192.168.4.1/setup" method="post">
+			 <div>
+				<label for="ssid">WiFi SSID</label>
+				<input name="ssid" value="Redkea123">
+			  </div>
+			  <div>
+				<label for="pass">WiFi Password</label>
+				<input name="pass" value="Redkea123">
+			  </div>
+			  <div>
+				<label for="deviceID">Device ID</label>
+				<input name="deviceID" value="">
+			  </div>
+			  <div>
+				<button>Save Configuration</button>
+			  </div>
+			</form>
+		</body></html>
 	)";
 
 const char setupHtml[] PROGMEM = R"(
@@ -73,13 +77,13 @@ void resetMemory() {
 
 class RedkeaESP8266 : public RedkeaBase<RedkeaESP8266, Types> {
 public:
-    void begin(const char* deviceID);
+    void begin();
     void begin(const char* ssid, const char* pass, const char* deviceID);
     void loopOverride();
 
 private:
     bool hasWiFiSetup();
-    void readSettingsAndConnect();
+    String readSettingsAndConnect();
     void connectToWiFi(const char* ssid, const char* pass);
     void createWiFiAP();
     void handleRoot();
@@ -89,14 +93,15 @@ private:
     ESP8266WebServer* webserver;
 };
 
-void RedkeaESP8266::begin(const char* deviceID) {
+void RedkeaESP8266::begin() {
     EEPROM.begin(512);
 
     pinMode(D1, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(D1), resetMemory, FALLING);
 
+    String deviceID;
     if (hasWiFiSetup()) {
-        readSettingsAndConnect();
+        deviceID = readSettingsAndConnect();
     } else {
         createWiFiAP();
     }
@@ -106,6 +111,7 @@ void RedkeaESP8266::begin(const char* deviceID) {
 
 void RedkeaESP8266::begin(const char* ssid, const char* pass, const char* deviceID) {
     connectToWiFi(ssid, pass);
+    RedkeaBase::begin(deviceID);
 }
 
 void RedkeaESP8266::loopOverride() {
@@ -119,20 +125,35 @@ bool RedkeaESP8266::hasWiFiSetup() {
     return EEPROM.read(0);
 }
 
-void RedkeaESP8266::readSettingsAndConnect() {
+String RedkeaESP8266::readSettingsAndConnect() {
     String ssid;
-    uint8_t ssidSize = EEPROM.read(1);
+    int ssidOffset = 1;
+    uint8_t ssidSize = EEPROM.read(ssidOffset);
     for (uint8_t i = 0; i < ssidSize; ++i) {
-        ssid += (char)EEPROM.read(2 + i);
+        ssid += (char)EEPROM.read(ssidOffset + 1 + i);
     }
 
     String pass;
-    uint8_t passSize = EEPROM.read(3 + ssidSize);
+    int passOffset = ssidOffset + 1 + ssidSize;
+    uint8_t passSize = EEPROM.read(passOffset);
     for (uint8_t i = 0; i < passSize; ++i) {
-        pass += (char)EEPROM.read(3 + ssidSize + i);
+        pass += (char)EEPROM.read(passOffset + 1 + i);
     }
 
+    String deviceID;
+    int deviceIDOffset = passOffset + 1 + passSize;
+    uint8_t deviceIDSize = EEPROM.read(deviceIDOffset);
+    for (uint8_t i = 0; i < deviceIDSize; ++i) {
+        deviceID += (char)EEPROM.read(deviceIDOffset + 1 + i);
+    }
+
+    REDKEA_PRINTLN(ssid);
+    REDKEA_PRINTLN(pass);
+    REDKEA_PRINTLN(deviceID);
+
     connectToWiFi(ssid.c_str(), pass.c_str());
+
+    return deviceID;
 }
 
 void RedkeaESP8266::connectToWiFi(const char* ssid, const char* pass) {
@@ -150,9 +171,16 @@ void RedkeaESP8266::connectToWiFi(const char* ssid, const char* pass) {
 }
 
 void RedkeaESP8266::createWiFiAP() {
-    REDKEA_PRINTLN_F("Create WiFi AP");
     WiFi.mode(WIFI_AP);
-    if (!WiFi.softAP("RedkeaAP", "RedkeaAP")) {
+    String mac = WiFi.macAddress();
+    String apName = "RedkeaAP_";
+    apName += mac[0];
+    apName += mac[1];
+    apName += mac[3];
+    apName += mac[4];
+    REDKEA_PRINT_F("Create WiFi AP: ");
+    REDKEA_PRINTLN_F(apName);
+    if (!WiFi.softAP(apName.c_str(), "RedkeaAP")) {
         REDKEA_PRINTLN_F("Error creating WiFi AP");
     }
     IPAddress myIP = WiFi.softAPIP();
@@ -166,27 +194,37 @@ void RedkeaESP8266::createWiFiAP() {
 }
 
 void RedkeaESP8266::handleRoot() {
-    
+
     webserver->send(200, "text/html", rootHtml);
 }
 
 void RedkeaESP8266::handleSetup() {
     String ssid = webserver->arg("ssid");
     String pass = webserver->arg("pass");
+    String deviceID = webserver->arg("deviceID");
     REDKEA_PRINTLN_F("Received WiFi setup:");
     REDKEA_PRINT_F("SSID: ");
     REDKEA_PRINTLN(ssid);
     REDKEA_PRINT_F("Password: ");
     REDKEA_PRINTLN(pass);
+    REDKEA_PRINT_F("Device ID: ");
+    REDKEA_PRINTLN(deviceID);
 
     EEPROM.write(0, 1);
-    EEPROM.write(1, ssid.length());
+    int ssidOffset = 1;
+    EEPROM.write(ssidOffset, ssid.length());
     for (int i = 0; i < ssid.length(); ++i) {
-        EEPROM.write(2 + i, ssid[i]);
+        EEPROM.write(ssidOffset + 1 + i, ssid[i]);
     }
-    EEPROM.write(pass.length(), 3 + ssid.length());
+    int passOffset = ssidOffset + 1 + ssid.length();
+    EEPROM.write(passOffset, pass.length());
     for (int i = 0; i < pass.length(); ++i) {
-        EEPROM.write(3 + ssid.length() + i, pass[i]);
+        EEPROM.write(passOffset + 1 + i, pass[i]);
+    }
+    int deviceIDOffset = passOffset + 1 + pass.length();
+    EEPROM.write(deviceIDOffset, deviceID.length());
+    for (int i = 0; i < deviceID.length(); ++i) {
+        EEPROM.write(deviceIDOffset + 1 + i, deviceID[i]);
     }
     EEPROM.commit();
 
