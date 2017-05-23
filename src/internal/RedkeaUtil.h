@@ -25,17 +25,12 @@
 
 #define REDKEA_FATAL(message) Serial.println(message);
 
-#if defined(__AVR__)
 
+#if defined(__AVR__)
 #include <avr/pgmspace.h>
 #define REDKEA_F(arg) F(arg)
-
 #else
-
 #define REDKEA_F(arg) arg
-#define PROGMEM
-#define PGM_P const char*
-
 #endif
 
 

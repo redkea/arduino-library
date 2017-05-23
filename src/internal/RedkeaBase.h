@@ -25,7 +25,7 @@
 #include "RedkeaMessage.h"
 #include "RedkeaUtil.h"
 
-template <typename Types> class RedkeaBase {
+template <typename Derived, typename Types> class RedkeaBase {
 public:
     RedkeaBase();
     void begin(const String& deviceID);
@@ -50,63 +50,65 @@ private:
     RedkeaLooper<Types> m_looper;
 };
 
-template <typename Types>
-RedkeaBase<Types>::RedkeaBase()
+template <typename Derived, typename Types>
+RedkeaBase<Derived, Types>::RedkeaBase()
     : m_looper(typename Types::ServerType(REDKEA_PORT)) {}
 
-template <typename Types> void RedkeaBase<Types>::begin(const String& deviceID) {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::begin(const String& deviceID) {
     m_looper.begin(deviceID);
 }
 
-template <typename Types> void RedkeaBase<Types>::loop() {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::loop() {
     m_looper.loop();
+    static_cast<Derived*>(this)->loopOverride();
 }
 
-template <typename Types> RedkeaMessage RedkeaBase<Types>::createMessage(const String& widgetID) {
+template <typename Derived, typename Types> RedkeaMessage RedkeaBase<Derived, Types>::createMessage(const String& widgetID) {
     RedkeaMessage message(RedkeaCommand::DATA_SEND);
     message.addString(widgetID);
     return message;
 }
 
-template <typename Types> void RedkeaBase<Types>::sendMessage(const RedkeaMessage& message) {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::sendMessage(const RedkeaMessage& message) {
     m_looper.write(message.data(), message.size());
 }
 
-template <typename Types> void RedkeaBase<Types>::sendToTextWidget(const String& widgetID, const String& text) {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::sendToTextWidget(const String& widgetID, const String& text) {
     RedkeaMessage message = createMessage(widgetID);
     message.addString(text);
     sendMessage(message);
 }
 
-template <typename Types> void RedkeaBase<Types>::sendToTextWidget(const String& widgetID, int value) {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::sendToTextWidget(const String& widgetID, int value) {
     RedkeaMessage message = createMessage(widgetID);
     message.addInt(value);
     sendMessage(message);
 }
 
-template <typename Types> void RedkeaBase<Types>::sendToTextWidget(const String& widgetID, float value) {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::sendToTextWidget(const String& widgetID, float value) {
     RedkeaMessage message = createMessage(widgetID);
     message.addFloat(value);
     sendMessage(message);
 }
 
-template <typename Types> int RedkeaBase<Types>::readFromSliderWidget(RedkeaMessage::Args args) {
+template <typename Derived, typename Types> int RedkeaBase<Derived, Types>::readFromSliderWidget(RedkeaMessage::Args args) {
     return args.asInt();
 }
 
-template <typename Types> bool RedkeaBase<Types>::readFromToggleWidget(RedkeaMessage::Args args) {
+template <typename Derived, typename Types> bool RedkeaBase<Derived, Types>::readFromToggleWidget(RedkeaMessage::Args args) {
     return args.asBool();
 }
 
-template <typename Types> bool RedkeaBase<Types>::readFromTouchWidget(RedkeaMessage::Args args) {
+template <typename Derived, typename Types> bool RedkeaBase<Derived, Types>::readFromTouchWidget(RedkeaMessage::Args args) {
     return args.asBool();
 }
 
-template <typename Types> void RedkeaBase<Types>::registerSender(const String& name, RedkeaSendFunctionPtr fun) {
+template <typename Derived, typename Types> void RedkeaBase<Derived, Types>::registerSender(const String& name, RedkeaSendFunctionPtr fun) {
     m_looper.registerSender(name, fun);
 }
 
-template <typename Types> void RedkeaBase<Types>::registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun) {
+template <typename Derived, typename Types>
+void RedkeaBase<Derived, Types>::registerReceiver(const String& name, RedkeaReceiveFunctionPtr fun) {
     m_looper.registerReceiver(name, fun);
 }
 

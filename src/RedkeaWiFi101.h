@@ -32,9 +32,10 @@ struct Types {
     typedef WiFiUDP UDPType;
 };
 
-class RedkeaWiFi101 : public RedkeaBase<Types> {
+class RedkeaWiFi101 : public RedkeaBase<RedkeaWiFi101, Types> {
 public:
     void begin(const char* ssid, const char* pass, const char* deviceID);
+	void loopOverride() {}
 };
 
 void RedkeaWiFi101::begin(const char* ssid, const char* pass, const char* deviceID) {

@@ -32,13 +32,16 @@ struct Types {
     typedef WiFiUDP UDPType;
 };
 
-class RedkeaWiFi : public RedkeaBase<Types> {
+class RedkeaWiFi : public RedkeaBase<RedkeaWiFi, Types> {
 public:
     void begin(const char* ssid, const char* pass, const char* deviceID);
+	void loopOverride() {}
 };
 
 void RedkeaWiFi::begin(const char* ssid, const char* pass, const char* deviceID) {
-    // check for the presence of the shield
+    REDKEA_PRINT_F("Check WiFi status");
+	
+	// check for the presence of the shield
     if (WiFi.status() == WL_NO_SHIELD) {
         REDKEA_FATAL("WiFi shield not present");
         // don't continue
