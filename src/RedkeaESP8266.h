@@ -77,7 +77,7 @@ void resetMemory() {
 
 class RedkeaESP8266 : public RedkeaBase<RedkeaESP8266, Types> {
 public:
-    void begin();
+    void begin(uint8_t resetPin);
     void begin(const char* ssid, const char* pass, const char* deviceID);
     void loopOverride();
 
@@ -93,11 +93,11 @@ private:
     ESP8266WebServer* webserver;
 };
 
-void RedkeaESP8266::begin() {
+void RedkeaESP8266::begin(uint8_t resetPin) {
     EEPROM.begin(512);
 
-    pinMode(D1, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(D1), resetMemory, FALLING);
+    pinMode(resetPin, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(resetPin), resetMemory, FALLING);
 
     String deviceID;
     if (hasWiFiSetup()) {
